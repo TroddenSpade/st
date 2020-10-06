@@ -14,19 +14,33 @@ mongoose.connect(config.DATABASE, {
 });
 
 const get = async () => {
+  rem = [];
   for (let a of Apps) {
-    const data = await axios.get(
-      `https://store.steampowered.com/api/appdetails?appids=${a.appid}&cc=us`
+    let ext = await App.exists({ steam_appid: a.appid });
+    if (!ext) {
+      await rem.push(a);
+    }
+  }
+  for (let a of rem) {
+    const res = await axios.get(
+      `https://store.steampowered.com/api/appdetails?appids=${a.appid}`
     );
-
-    // var info = res.data[a.appid].data;
-    console.log(data);
-    // const user = new App(info);
-    // user.save((err, doc) => {
-    //   if (err) console.log(err, "error :" + a);
-    //   console.log(a.name);
-    // });
+    let app = res.data[a.appid];
+    console.log(app, a.name);
+    if (app.success) {
+      const game = new App(app.data);
+      game.save((err, doc) => {
+        if (err) console.log(err, "error :" + a);
+      });
+    }
   }
 };
 
 get();
+// const test = async () => {
+//   let res = await App.exists({ steam_appid: 000 });
+
+//   console.log(res);
+// };
+
+// test();
